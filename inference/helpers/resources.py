@@ -15,5 +15,5 @@ def nn_json(file_path):
         f.close()
     return NN_json
 
-blob_fpath            = relative_to_abs_path('../resources/nn/mobilenet-ssd/mobilenet-ssd.blob')
-blob_config_fpath     = relative_to_abs_path('../resources/nn/mobilenet-ssd/mobilenet-ssd.json')
+blob_fpath            = relative_to_abs_path('../model/mobilenet-ssd.blob')
+blob_config_fpath     = relative_to_abs_path('../model/mobilenet-ssd.json')
