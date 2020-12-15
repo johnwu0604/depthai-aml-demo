@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 
 def relative_to_abs_path(relative_path):
@@ -7,5 +8,12 @@ def relative_to_abs_path(relative_path):
     except FileNotFoundError:
         return None
 
-blob_fpath            = relative_to_abs_path('../resources/nn/mobilenet-ssd/mobilenet-ssd.blob.sh14cmx14NCE1')
+def nn_json(file_path):
+    NN_json = None
+    with open(file_path) as f:
+        NN_json = json.load(f)
+        f.close()
+    return NN_json
+
+blob_fpath            = relative_to_abs_path('../resources/nn/mobilenet-ssd/mobilenet-ssd.blob')
 blob_config_fpath     = relative_to_abs_path('../resources/nn/mobilenet-ssd/mobilenet-ssd.json')

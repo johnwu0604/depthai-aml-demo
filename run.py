@@ -1,15 +1,21 @@
 import cv2
 import depthai
+import json
 from pathlib import Path
 from helpers import pipeline
+from helpers import resources
 
 class DepthAI():
 
     def __init__(self):
         self.device = depthai.Device('', False)
         self.p = self.device.create_pipeline(config=pipeline.config)
-        if self.p is None:
-            raise RuntimeError('Error initializing pipelne')
+        self.nn_json = resources.nn_json(resources.blob_config_fpath)
+
+    def endLoop(self):
+        del self.p  
+        del self.device
+        cv2.destroyAllWindows()
 
     def startLoop(self):
         detections = []
@@ -21,6 +27,7 @@ class DepthAI():
 
             for packet in data_packets:
                 if packet.stream_name == 'previewout':
+                
                     data = packet.getData()
                     data0 = data[0, :, :]
                     data1 = data[1, :, :]
@@ -33,17 +40,18 @@ class DepthAI():
                     for detection in detections:
                         pt1 = int(detection.x_min * img_w), int(detection.y_min * img_h)
                         pt2 = int(detection.x_max * img_w), int(detection.y_max * img_h)
-
                         cv2.rectangle(frame, pt1, pt2, (0, 0, 255), 2)
 
-                    cv2.imshow('previewout', frame)
+                        pt_label = pt1[0], pt1[1] + 20
+                        label = str(self.nn_json['mappings']['labels'][detection.label])
+                        cv2.putText(frame, label, pt_label, cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
+
+                    cv2.imshow('Video', frame)
 
             if cv2.waitKey(1) == ord('q'):
                 break
-
-        del p  
-        del device
-        cv2.destroyAllWindows()
+                
+        endLoop()
 
 if __name__ == '__main__':
     dai = DepthAI()

@@ -1,10 +1,10 @@
-from . import resource_paths
+from . import resources
 
 config = {
     'streams': ['metaout', 'previewout'],
     'ai': {
-        'blob_file': resource_paths.blob_fpath,
-        'blob_file_config': resource_paths.blob_config_fpath,
+        'blob_file': resources.blob_fpath,
+        'blob_file_config': resources.blob_config_fpath,
         'camera_input': 'rgb',
         'shaves': 14,
         'cmx_slices': 14,
