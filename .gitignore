@@ -29,6 +29,7 @@ share/python-wheels/
 *darwin.so
 MANIFEST
 *.idea
+
 # DepthAI-Specific
 dataset/
 .fw_cache/
@@ -38,6 +39,11 @@ mesh_right.calib
 intrinsic.json
 intrinsic_calib_m2
 log_system_information.json
+
+# AML-Demo Specific
+training/checkpoints/*
+training/checkpoints.tar.gz
+training/data/*
 
 *.h264
 *.h265
