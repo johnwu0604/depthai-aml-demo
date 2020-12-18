@@ -40,6 +40,9 @@ intrinsic.json
 intrinsic_calib_m2
 log_system_information.json
 
+# Jupyter
+*/.ipynb_checkpoints/*
+
 # AML-Demo Specific
 training/checkpoints/*
 training/checkpoints.tar.gz
