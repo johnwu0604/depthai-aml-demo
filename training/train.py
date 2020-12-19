@@ -1,4 +1,6 @@
+import argparse
 import os
+import re
 import sys
 import subprocess
 import requests
@@ -6,60 +8,48 @@ import zipfile
 import tensorflow as tf
 tf.get_logger().setLevel('INFO')
 
-print('Installing additional libraries .....')
-os.system('apt-get update')
-os.system('apt-get install ffmpeg libsm6 libxext6  -y')
-print('Done. \n')
+# Get arguments from parser
+parser = argparse.ArgumentParser(description='Training arg parser')
+parser.add_argument('--data_dir', type=str, help='Directory where training data is stored')
+parser.add_argument('--checkpoint_dir', type=str, help='Directory where initial checkpoint is stored')
+parser.add_argument('--tensorflow_models_dir', type=str, help='Directory where tensorflow model directory is stored')
+parser.add_argument('--output_dir', type=str, help='Directory where outputs will be stored')
+args = parser.parse_args()
 
-print('Cloning tensorflow models repo .....')
-os.system('git clone https://github.com/tensorflow/models tensorflow-models')
-print('Done. \n')
+data_dir = args.data_dir
+checkpoint_dir = args.checkpoint_dir
+tensorflow_models_dir = args.tensorflow_models_dir
+output_dir = args.output_dir
 
-root_dir = os.path.abspath('.')
-research_dir = os.path.abspath('tensorflow-models/research')
-slim_dir = os.path.abspath('tensorflow-models/research/slim')
-
+# Set paths to tensorflow models folder
+research_dir = os.path.abspath('{}/research'.format(tensorflow_models_dir))
+slim_dir = os.path.abspath('{}/research/slim'.format(tensorflow_models_dir))
 sys.path.insert(0, slim_dir)
 sys.path.insert(0, research_dir)
 
-print('Compiling tensorflow models proto files .....')
-os.chdir(research_dir)
-os.system('protoc object_detection/protos/*.proto --python_out=.')
-print('Done. \n')
+# Install additional libraries
+os.system('apt-get update')
+os.system('apt-get install ffmpeg libsm6 libxext6  -y')
 
-# print('Downloading masks dataset .....')
-# os.chdir(root_dir)
-# data_dir = 'data'
-# if not os.path.exists(data_dir):
-#     zip_file_name = 'data.zip'
-#     if not os.path.exists(zip_file_name):
-#         url = 'https://johndatasets.blob.core.windows.net/masks/data.zip?sp=r&st=2020-12-17T00:18:43Z&se=2022-03-01T08:18:43Z&spr=https&sv=2019-12-12&sr=b&sig=SfcpEhbQ1vYhWelmz0Ow873Ska%2B4mB5W43CdOQ3H6LI%3D'
-#         r = requests.get(url, allow_redirects=True)
-#         with open(zip_file_name, 'wb') as f:
-#             f.write(r.content)
-#     with zipfile.ZipFile(zip_file_name, 'r') as zip_ref:
-#         zip_ref.extractall('.')
-# print('Done. \n')
+# Update config file with mounted data locations
+config_file = 'model.config'
+with open(config_file) as f:
+    s = f.read()
+with open(config_file, 'w') as f:
+    s = re.sub('fine_tune_checkpoint: ".*?"',
+               'fine_tune_checkpoint: "{}/model.ckpt"'.format(checkpoint_dir), s)
+    s = re.sub(
+        '(input_path: ".*?)(train.record)(.*?")', 'input_path: "{}/tf_record/train.record"'.format(data_dir), s)
+    s = re.sub(
+        '(input_path: ".*?)(val.record)(.*?")', 'input_path: "{}/tf_record/val.record"'.format(data_dir), s)
+    s = re.sub(
+        'label_map_path: ".*?"', 'label_map_path: "{}/annotations/label_map.pbtxt"'.format(data_dir), s)
+    f.write(s)
 
-# print('Downloading pretrained weights for SSD Mobile Net V2 COCO model .....')
-# checkpoints_dir = 'checkpoints'
-# if not os.path.exists(checkpoints_dir):
-#     zip_file_name = 'checkpoints.tar.gz'
-#     if not os.path.exists(zip_file_name):
-#         url = 'http://download.tensorflow.org/models/object_detection/ssd_mobilenet_v2_coco_2018_03_29.tar.gz'
-#         r = requests.get(url, allow_redirects=True)
-#         with open(zip_file_name, 'wb') as f:
-#             f.write(r.content)
-#     os.mkdir(checkpoints_dir)
-#     os.system('tar --extract --file {} --strip-components=1 --directory {}'.format(zip_file_name, checkpoints_dir))
-# print('Done. \n')
-
-print('Training model .....')
-os.chdir(root_dir)
-train_script = 'tensorflow-models/research/object_detection/model_main.py'
+# Run training script
+train_script = '{}/research/object_detection/model_main.py'.format(tensorflow_models_dir)
 sys.argv = ['--logtostderr', 
-            '--pipeline_config_path', 'model.config', 
-            '--model_dir', 'outputs']
+            '--pipeline_config_path', config_file, 
+            '--model_dir', output_dir]
 exec(open(train_script).read())
-print('Done. \n')
 
