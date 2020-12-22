@@ -11,7 +11,7 @@ from azureml.pipeline.steps import PythonScriptStep
 print('Connecting to Workspace ...')
 workspace = Workspace.from_config()
 datastore = workspace.get_default_datastore()
-compute_target = workspace.compute_targets['v100cluster']
+compute_target = workspace.compute_targets['john-v100cluster']
 
 # Get dataset and checkpoints
 dataset = workspace.datasets['mask-data'].as_named_input('data').as_mount()
@@ -85,8 +85,16 @@ convert_step = PythonScriptStep(name='Convert Model',
                                 outputs=[convert_output_dir],
                                 runconfig=run_config)
 
+# Step 4: Register Compiled Model
+register_step = PythonScriptStep(name='Register Model',
+                                source_directory='.',
+                                script_name='register.py', 
+                                compute_target=compute_target, 
+                                arguments=['--converted_model_dir', convert_output_dir],
+                                inputs=[convert_output_dir],
+                                runconfig=run_config)
 
 # Submit pipeline
 print('Submitting pipeline ...')
-pipeline = Pipeline(workspace=workspace, steps=[train_step, export_step, convert_step])
+pipeline = Pipeline(workspace=workspace, steps=[train_step, export_step, convert_step, register_step])
 pipeline_run = Experiment(workspace, 'mask-detector').submit(pipeline)

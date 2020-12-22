@@ -3,6 +3,7 @@ import sys
 import argparse
 import subprocess
 import requests
+import time
 
 # Get arguments from parser
 parser = argparse.ArgumentParser(description='Training arg parser')
@@ -32,7 +33,6 @@ os.system('./install.sh --silent silent.cfg')
 
 print('Modifying JSON...')
 os.chdir('/opt/intel/openvino/deployment_tools/model_optimizer/extensions/front/tf/')
-os.system('ls .')
 
 with open('ssd_v2_support.json', 'r') as f:
   filedata = f.read()
@@ -43,20 +43,24 @@ with open('ssd_v2_support.json', 'w') as f:
 
 # Convert model
 print('Converting Model ...')
-os.system('ls /opt/intel/openvino/deployment_tools/model_optimizer')
-os.system('ls /opt/intel/openvino/bin')
 export_script = os.path.abspath('/opt/intel/openvino/deployment_tools/model_optimizer/mo.py')
 os.chdir(exported_model_dir)
-print('Sourcing  ...')
+
+print('Sourcing setup ...')
+os.system('echo "dash dash/sh boolean false" | debconf-set-selections')
+os.system('mkdir -p /usr/share/man/man1')
+os.system('dpkg-reconfigure -p critical dash')
+
+print('Sourcing script ...')
 os.system('source /opt/intel/openvino/bin/setupvars.sh')
+
 print('Running  ...')
-sys.argv = ['--input_model', 'frozen_inference_graph.pb', 
-            '--tensorflow_use_custom_operations_config', '/opt/intel/openvino/deployment_tools/model_optimizer/extensions/front/tf/ssd_v2_support.json', 
-            '--tensorflow_object_detection_api_pipeline_config', 'pipeline.config',
-            '--reverse_input_channels', 
-            '--output_dir', output_dir,
-            '--data_type', 'FP16']
-exec(open(export_script).read())
+os.system('python {} --input_model frozen_inference_graph.pb \
+                     --tensorflow_use_custom_operations_config /opt/intel/openvino/deployment_tools/model_optimizer/extensions/front/tf/ssd_v2_support.json \
+                     --tensorflow_object_detection_api_pipeline_config pipeline.config \
+                     --reverse_input_channels \
+                     --output_dir {}\
+                     --data_type FP16'.format(export_script, output_dir))
 
 # Compile model 
 print('Compiling Model ...')
@@ -70,7 +74,7 @@ files = [
   ('weights', open(binfile,'rb'))
 ]
 
-output_file = '{}/mobilenet-ssd-face-mask.blob'
+output_file = '{}/mobilenet-ssd-face-mask.blob'.format(output_dir)
 response = requests.request('POST', url, data=payload, files=files)
 with open(output_file, 'wb') as f:
   f.write(response.content)
