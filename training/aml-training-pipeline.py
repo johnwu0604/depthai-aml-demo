@@ -68,33 +68,15 @@ export_step = PythonScriptStep(name='Export Model',
                                 runconfig=run_config)
 
 # Step 3: Convert Model To OpenVINO format
-convert_output_dir = PipelineData(
-    name='convert_output_dir', 
-    pipeline_output_name='convert_output_dir',
-    datastore=datastore,
-    output_mode='mount',
-    is_directory=True)
-
 convert_step = PythonScriptStep(name='Convert Model',
                                 source_directory='.',
                                 script_name='convert.py', 
                                 compute_target=compute_target, 
-                                arguments=['--exported_model_dir', export_output_dir, 
-                                           '--output_dir', convert_output_dir],
+                                arguments=['--exported_model_dir', export_output_dir],
                                 inputs=[export_output_dir],
-                                outputs=[convert_output_dir],
-                                runconfig=run_config)
-
-# Step 4: Register Compiled Model
-register_step = PythonScriptStep(name='Register Model',
-                                source_directory='.',
-                                script_name='register.py', 
-                                compute_target=compute_target, 
-                                arguments=['--converted_model_dir', convert_output_dir],
-                                inputs=[convert_output_dir],
                                 runconfig=run_config)
 
 # Submit pipeline
 print('Submitting pipeline ...')
-pipeline = Pipeline(workspace=workspace, steps=[train_step, export_step, convert_step, register_step])
+pipeline = Pipeline(workspace=workspace, steps=[train_step, export_step, convert_step])
 pipeline_run = Experiment(workspace, 'mask-detector').submit(pipeline)

@@ -4,15 +4,17 @@ import argparse
 import subprocess
 import requests
 import time
+from azureml.core.run import Run
+from azureml.core import Model
+from azureml.core import Workspace
 
 # Get arguments from parser
 parser = argparse.ArgumentParser(description='Training arg parser')
 parser.add_argument('--exported_model_dir', type=str, help='Directory where final model is exported to')
-parser.add_argument('--output_dir', type=str, help='Directory where outputs will be stored')
 args = parser.parse_args()
 
 exported_model_dir = args.exported_model_dir
-output_dir = args.output_dir
+output_dir = os.path.abspath('./outputs')
 
 # Install tools
 print('Installing dependencies...')
@@ -78,3 +80,10 @@ output_file = '{}/mobilenet-ssd-face-mask.blob'.format(output_dir)
 response = requests.request('POST', url, data=payload, files=files)
 with open(output_file, 'wb') as f:
   f.write(response.content)
+
+# Register model
+print('Registering model ...')
+run = Run.get_context()
+model = run.register_model(model_path='outputs',
+                           model_name='face-mask-detector',
+                           description='A face mask detecting model in compiled OpenVINO IR format for deploying on opencv AI kit')

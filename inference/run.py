@@ -4,10 +4,16 @@ import json
 from pathlib import Path
 from helpers import pipeline
 from helpers import resources
+from azureml.core import Workspace
 
 class DepthAI():
 
     def __init__(self):
+
+        workspace = Workspace.from_config()
+        model = workspace.models['face-mask-detector']
+        model.download(target_dir='.')
+
         self.device = depthai.Device('', False)
         self.p = self.device.create_pipeline(config=pipeline.config)
         self.nn_json = resources.nn_json(resources.blob_config_fpath)

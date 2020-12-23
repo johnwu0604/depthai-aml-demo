@@ -1,0 +1,19 @@
+{
+    "NN_config":
+    {
+        "output_format" : "detection",
+        "NN_family" : "mobilenet",
+        "confidence_threshold" : 0.9
+    },
+    "mappings":
+    {
+        "labels":
+        [
+            "0",
+            "with_mask",
+            "mask_weared_incorrect",
+            "without_mask"
+        ]
+    }
+}
+
