@@ -12,7 +12,7 @@ class DepthAI():
 
         workspace = Workspace.from_config()
         model = workspace.models['face-mask-detector']
-        model.download(target_dir='.')
+        model.download(target_dir='.', exist_ok=True)
 
         self.device = depthai.Device('', False)
         self.p = self.device.create_pipeline(config=pipeline.config)
