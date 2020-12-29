@@ -1,6 +1,7 @@
 import cv2
 import depthai
 import json
+import os
 from pathlib import Path
 from helpers import pipeline
 from helpers import resources
@@ -10,9 +11,11 @@ class DepthAI():
 
     def __init__(self):
 
-        workspace = Workspace.from_config()
-        model = workspace.models['face-mask-detector']
-        model.download(target_dir='.', exist_ok=True)
+        # Download model locally only if it does not already exist
+        if not os.path.exists('outputs'):
+            workspace = Workspace.from_config()
+            model = workspace.models['face-mask-detector']
+            model.download(target_dir='.', exist_ok=True)
 
         self.device = depthai.Device('', False)
         self.p = self.device.create_pipeline(config=pipeline.config)

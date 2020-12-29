@@ -3,7 +3,7 @@
     {
         "output_format" : "detection",
         "NN_family" : "mobilenet",
-        "confidence_threshold" : 0.5
+        "confidence_threshold" : 0.95
     },
     "mappings":
     {
@@ -11,7 +11,7 @@
         [
             "0",
             "with_mask",
-            "mask_weared_incorrect",
+            "mask_worn_incorrectly",
             "without_mask"
         ]
     }

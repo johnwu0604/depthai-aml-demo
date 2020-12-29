@@ -1,3 +1,4 @@
+import argparse
 from azureml.core import Workspace
 from azureml.core import Experiment
 from azureml.core import Environment
@@ -7,11 +8,18 @@ from azureml.core.runconfig import RunConfiguration
 from azureml.data.data_reference import DataReference
 from azureml.pipeline.steps import PythonScriptStep
 
+# Get arguments from parser
+parser = argparse.ArgumentParser()
+parser.add_argument('--compute-target', type=str, required=True, help='The name of the compute target to use')
+args = parser.parse_args()
+
+compute_target = args.compute_target
+
 # Get workspace, datastores, and compute targets
 print('Connecting to Workspace ...')
 workspace = Workspace.from_config()
 datastore = workspace.get_default_datastore()
-compute_target = workspace.compute_targets['john-v100cluster']
+compute_target = workspace.compute_targets[compute_target]
 
 # Get dataset and checkpoints
 dataset = workspace.datasets['mask-data'].as_named_input('data').as_mount()
@@ -35,7 +43,7 @@ train_output_dir = PipelineData(
     is_directory=True)
 
 train_step = PythonScriptStep(name='Train Model',
-                        source_directory='.',
+                        source_directory='./src',
                         script_name='train.py', 
                         compute_target=compute_target, 
                         arguments=['--data_dir', dataset, 
@@ -55,7 +63,7 @@ export_output_dir = PipelineData(
     is_directory=True)
 
 export_step = PythonScriptStep(name='Export Model',
-                               source_directory='.',
+                               source_directory='./src',
                                script_name='export.py', 
                                compute_target=compute_target, 
                                arguments=['--data_dir', dataset, 
@@ -69,7 +77,7 @@ export_step = PythonScriptStep(name='Export Model',
 
 # Step 3: Convert Model To OpenVINO format
 convert_step = PythonScriptStep(name='Convert Model',
-                                source_directory='.',
+                                source_directory='./src',
                                 script_name='convert.py', 
                                 compute_target=compute_target, 
                                 arguments=['--exported_model_dir', export_output_dir],
